@@ -1,0 +1,32 @@
+<template>
+    <lightning-card title="Knowledge Article Viewer" icon-name="standard:knowledge">
+        <template if:true={showSpinner}>
+            <div class="spinner">
+                <lightning-spinner variant="brand" alternative-text="Retrieving articles..."></lightning-spinner>
+            </div>
+        </template>
+        <div class="slds-p-around_x-small">
+            <div onkeyup={handleSearch}>
+                <lightning-input type="search" label="Search" value={searchStr} min-length="3"
+                    onchange={handleSearchChange}>
+                </lightning-input>
+            </div>
+        </div>
+        <div class="slds-grid">
+            <div class="slds-col slds-size_3-of-12">
+                <div class="slds-m-left_x-small"
+                    style="border: 1px solid #C8C8C8; border-radius: 5px; min-height: 300px">
+                    <lightning-tree items={treeList} onselect={handleSelect}></lightning-tree>
+                </div>
+            </div>
+            <div class="slds-col slds-size_9-of-12">
+                <div class="slds-m-left_x-small slds-m-right_x-small"
+                    style="height: 100%; border: 1px solid #C8C8C8; border-radius: 5px; ">
+                    <lightning-datatable key-field="Id" data={data} columns={columns} onsave={handleSave}
+                        draft-values={draftValues} hide-checkbox-column show-row-number-column>
+                    </lightning-datatable>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>PSKnowledgeHierarchyUtils</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>KA_Hierarchy_Order__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>KA_Hierarchy_Order__c</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>KA_Hierarchy_Order__c-KA Hierarchy Order Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>psKnowledgeHierarchyViewer</members>
+        <name>LightningComponentBundle</name>
+    </types>
+    <types>
+        <members>PSKnowledgeHierarchyViewer</members>
+        <name>PermissionSet</name>
+    </types>
+    <version>45.0</version>
+</Package>
