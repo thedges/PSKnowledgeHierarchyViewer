@@ -16,6 +16,7 @@ This is demo Lightning Web Component for a hierarchy viewer of Salesforce knowle
   
 Limitations and options for future enhancements:
   * Currently the component doesn't take in consideration any of the knowledge article visibility settings (Internal App, PKB, Customer, Partner)
+  * The table for listing the knowledge articles doesn't support pagination.
   
 Here is video of the component:  
 ![alt text](https://github.com/thedges/PSKnowledgeHierarchyViewer/blob/master/PSKnowledgeHierarchyViewer.gif "Sample Image")
