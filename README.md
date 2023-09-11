@@ -1,4 +1,4 @@
-# PSKnowledgeHierarchyViewer
+# SFDC-KnowledgebaseHierarchy
 Demo component to show ability for a Knowledge hierarchy viewer
 
 THIS SOFTWARE IS COVERED BY [THIS DISCLAIMER](https://raw.githubusercontent.com/thedges/Disclaimer/master/disclaimer.txt).
@@ -30,9 +30,9 @@ This component currently has no configuration properties.
 To use this component:
 1. Install the component using the **'Deploy to Salesforce'** button below.
 2. Assign the **PSKnowledgeHierarchyViewer** permission set to any user that will use this component.
-2. Drag the **psKnowledgeHierarchyViewer** Lightning Component on to your page. That's it.
+3. Drag the **psKnowledgeHierarchyViewer** Lightning Component on to your page. That's it.
 
-<a href="https://githubsfdeploy.herokuapp.com">
+<a href="https://githubsfdeploy.herokuapp.com?owner=watchmaker-genomics&repo=SFDC-KnowledgebaseHierarchy&ref=master">
   <img alt="Deploy to Salesforce"
        src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/deploy.png">
 </a>
