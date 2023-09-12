@@ -37,3 +37,9 @@ To use this component:
        src="https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/deploy.png">
 </a>
 
+## Why this fork?
+
+When attempting to add Troy Hedges' original [PSKnowledgeHierarchyViewer](https://github.com/thedges/PSKnowledgeHierarchyViewer) plugin on a dedicated custom tab, as per Salesforce's documentation, [Add Lightning Components as Custom Tabs in a Lightning App](https://help.salesforce.com/s/articleView?id=sf.aura_add_cmp_lex.htm&type=5), the component was unavailable. It also looks like development of the plugin has ceased.
+
+Consulting the [Lightning Web Components Developer Guide: Configure Components for Custom Tabs](https://developer.salesforce.com/docs/platform/lwc/guide/use-config-custom-tab.html) docs indicate a quick addition to the Lightning Component configuration that enables addition to custom tabs.
+
