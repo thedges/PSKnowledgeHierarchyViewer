@@ -1,0 +1,307 @@
+//Test class to cover the code for PSKnowledgeHierarchyUtils Apex class
+@isTest
+private class PSKnowledgeHierarchyUtilsTest {
+    
+    private static String categoryName = null;
+    private static List<String> groupNames = new List<String>();
+    
+    @testSetup
+    private static void setupTestData() {
+        //Get the system admin profile
+        Profile pro = [SELECT Id FROM Profile WHERE Name='System Administrator']; 
+        Blob b = Crypto.GenerateAESKey(128);
+        String h = EncodingUtil.ConvertTohex(b);
+        String uid = h.SubString(0,8);
+        //Initializing knowledge user and running the test class on behalf of knowledge user
+        User u = new User(Alias = uid, Email= uid + '@testdomain.com', 
+                          EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US', 
+                          LocaleSidKey='en_US', ProfileId = pro.Id, 
+                          TimeZoneSidKey='America/New_York', UserName= uid + '@testdomain.com'); 
+        System.debug('User name='+u.firstName);
+        u.UserPermissionsKnowledgeUser = true;
+        //Running as knowledge user
+        System.runAs(u){
+            List<DescribeDataCategoryGroupResult> describeCategoryResult;
+            List<DescribeDataCategoryGroupStructureResult> describeCategoryStructureResult;
+            
+            List<String> objType = new List<String>();
+            objType.add('KnowledgeArticleVersion');
+            describeCategoryResult = Schema.describeDataCategoryGroups(objType);
+            
+            //Creating a list of pair objects to use as a parameter
+            //for the describe call
+            List<DataCategoryGroupSobjectTypePair> pairs = new List<DataCategoryGroupSobjectTypePair>();
+            
+            //Looping through the first describe result to create
+            //the list of pairs for the second describe call
+            for(DescribeDataCategoryGroupResult singleResult : describeCategoryResult) {
+                DataCategoryGroupSobjectTypePair p = new DataCategoryGroupSobjectTypePair();
+                p.setSobject(singleResult.getSobject());
+                p.setDataCategoryGroupName(singleResult.getName());
+                pairs.add(p);
+            }
+            
+            //describeDataCategoryGroupStructures()
+            describeCategoryStructureResult = Schema.describeDataCategoryGroupStructures(pairs, false);
+            System.debug('describeCategoryStructureResult=' + JSON.serialize(describeCategoryStructureResult));
+            
+            //Getting data from the result
+            DescribeDataCategoryGroupStructureResult singleResult = describeCategoryStructureResult[0];
+            
+            //Get details of category group
+            singleResult.getSobject();
+            singleResult.getName();
+            singleResult.getLabel();
+            singleResult.getDescription();
+            
+            categoryName = singleResult.getName();
+            List<Knowledge__DataCategorySelection> dataCategorySelections = new List<Knowledge__DataCategorySelection>();     
+            
+            //Get the top level categories
+            DataCategory [] toplevelCategories = singleResult.getTopCategories();
+            for (DataCategory cat : toplevelCategories) {
+                List<DataCategory> childList = cat.getChildCategories();
+                if(childList != null && !childList.isEmpty()) {
+                    for (DataCategory ccat : childList) {
+                        Knowledge__DataCategorySelection dataCategorySelection = new Knowledge__DataCategorySelection(DataCategoryGroupName = categoryName);
+                        dataCategorySelection.DataCategoryName = ccat.getName();
+                        dataCategorySelections.add(dataCategorySelection);
+                        groupNames.add(ccat.getName());
+                    }
+                }  
+            }
+            
+            List<Knowledge__kav> articles = new List<Knowledge__kav>();
+            
+            for(Integer i = 0 ; i < dataCategorySelections.size() ; i++) {
+                Knowledge__kav article = new Knowledge__kav(
+                    UrlName = 'test00' + i,
+                    Title = 'Test',
+                    Summary = 'Test article ' + i
+                );
+                articles.add(article);
+            }
+            insert articles; 
+            
+            List<Knowledge__kav> draftArticles = [SELECT KnowledgeArticleId FROM Knowledge__kav WHERE Id IN:articles];
+            
+            for(Integer i = 0 ; i < articles.size() ; i++) {
+                dataCategorySelections[i].ParentId = articles[i].Id;
+            }
+            insert dataCategorySelections;
+            
+            for(Knowledge__kav draftArticle : draftArticles) {
+                KbManagement.PublishingService.publishArticle(draftArticle.KnowledgeArticleId, false);
+            }
+        }
+    }
+    
+    @isTest
+    static void testGetKnowledgeHierarchy() {
+        // Test case for getKnowledgeHierarchy method
+        Test.startTest();
+        String hierarchy = PSKnowledgeHierarchyUtils.getKnowledgeHierarchy();
+        Test.stopTest();
+        System.assertNotEquals(null, hierarchy);
+    }
+    
+    @isTest
+    static void testGetKnowledgeArticles() {
+        populateLocalVariables();
+        // Test case for getKnowledgeArticles method
+        Test.startTest();
+        String articles1 = PSKnowledgeHierarchyUtils.getKnowledgeArticles(categoryName, groupNames[0]);
+        String articles2 = PSKnowledgeHierarchyUtils.getKnowledgeArticles(null, null);
+        Test.stopTest();
+        System.assertNotEquals(null, articles1);
+        System.assertNotEquals(null, articles2);
+    }
+    
+    @isTest
+    static void testSearchKnowledgeArticles() {
+        populateLocalVariables();
+        // Test case for searchKnowledgeArticles method
+        Test.startTest();
+        String articles = PSKnowledgeHierarchyUtils.searchKnowledgeArticles('Test', categoryName, groupNames[0]);
+        Test.stopTest();
+        System.assertNotEquals(null, articles);
+    }
+    
+    @isTest
+    static void testSaveOrder() {
+        populateLocalVariables();
+        //Get the system admin profile
+        Profile pro = [SELECT Id FROM Profile WHERE Name='System Administrator']; 
+        Blob b = Crypto.GenerateAESKey(128);
+        String h = EncodingUtil.ConvertTohex(b);
+        String uid = h.SubString(0,8);
+        //Initializing knowledge user and running the test class on behalf of knowledge user
+        User u = new User(Alias = uid, Email= uid + '@testdomain.com', 
+                          EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US', 
+                          LocaleSidKey='en_US', ProfileId = pro.Id, 
+                          TimeZoneSidKey='America/New_York', UserName= uid + '@testdomain.com'); 
+        System.debug('User name='+u.firstName);
+        u.UserPermissionsKnowledgeUser = true;
+        //Running as knowledge user
+        System.runAs(u){
+            Knowledge__kav article = new Knowledge__kav(
+                UrlName = 'test0000',
+                Title = 'Test',
+                Summary = 'Test article'
+            );
+            insert article;
+            
+            Knowledge__kav draftArticle = [SELECT KnowledgeArticleId FROM Knowledge__kav WHERE Id =: article.Id];
+            Knowledge__DataCategorySelection dcs = new Knowledge__DataCategorySelection(
+                DataCategoryGroupName = categoryName,
+                DataCategoryName = groupNames[0],
+                ParentId = article.Id
+            );
+            insert dcs;
+            KbManagement.PublishingService.publishArticle(draftArticle.KnowledgeArticleId, false);
+            
+            List<Knowledge__kav> articles = [SELECT KnowledgeArticleId FROM Knowledge__kav];
+            
+            // Test case for saveOrder method
+            Test.startTest();
+            List<PSKnowledgeHierarchyUtils.Order> orders = new List<PSKnowledgeHierarchyUtils.Order>();
+            PSKnowledgeHierarchyUtils.Order order1 = new PSKnowledgeHierarchyUtils.Order();
+            order1.Id = articles[0].Id;
+            order1.Order = '1';
+            order1.Op = 0;
+            orders.add(order1);
+            
+            PSKnowledgeHierarchyUtils.Order order2 = new PSKnowledgeHierarchyUtils.Order();
+            order2.Id = articles[1].Id;
+            order2.Order = '2';
+            order2.Op = 0;
+            orders.add(order2);
+            
+            PSKnowledgeHierarchyUtils.saveOrder(groupNames[0], categoryName, JSON.serialize(orders));
+            
+            Test.stopTest();
+            
+            // Assert the order values
+            List<KA_Hierarchy_Order__c> orderList = [SELECT Id, KA_Id__c, Order__c FROM KA_Hierarchy_Order__c WHERE Group_Name__c IN: groupNames];
+            System.assertEquals(2, orderList.size());
+            System.assertEquals(articles[0].Id, orderList[0].KA_Id__c);
+            System.assertEquals(1, orderList[0].Order__c);
+        }
+    }
+    
+    @isTest
+    static void testSaveOrderWithExistingOrder() {
+        populateLocalVariables();
+        //Get the system admin profile
+        Profile pro = [SELECT Id FROM Profile WHERE Name='System Administrator']; 
+        Blob b = Crypto.GenerateAESKey(128);
+        String h = EncodingUtil.ConvertTohex(b);
+        String uid = h.SubString(0,8);
+        //Initializing knowledge user and running the test class on behalf of knowledge user
+        User u = new User(Alias = uid, Email= uid + '@testdomain.com', 
+                          EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US', 
+                          LocaleSidKey='en_US', ProfileId = pro.Id, 
+                          TimeZoneSidKey='America/New_York', UserName= uid + '@testdomain.com'); 
+        System.debug('User name='+u.firstName);
+        u.UserPermissionsKnowledgeUser = true;
+        //running as knowledge user
+        System.runAs(u){
+            Knowledge__kav article = new Knowledge__kav(
+                UrlName = 'test0000',
+                Title = 'Test',
+                Summary = 'Test article'
+            );
+            insert article;
+            
+            Knowledge__kav draftArticle = [SELECT KnowledgeArticleId FROM Knowledge__kav WHERE Id =: article.Id];
+            Knowledge__DataCategorySelection dcs = new Knowledge__DataCategorySelection(
+                DataCategoryGroupName = categoryName,
+                DataCategoryName = groupNames[0],
+                ParentId = article.Id
+            );
+            insert dcs;
+            KbManagement.PublishingService.publishArticle(draftArticle.KnowledgeArticleId, false);
+            
+            List<Knowledge__kav> articles = [SELECT KnowledgeArticleId FROM Knowledge__kav];
+            
+            PSKnowledgeHierarchyUtils.Order order = new PSKnowledgeHierarchyUtils.Order();
+            order.Id = articles[0].Id;
+            order.Order = '1';
+            order.Op = 0;
+            PSKnowledgeHierarchyUtils.saveOrder(groupNames[0], categoryName, JSON.serialize(new List<PSKnowledgeHierarchyUtils.Order> {order}));
+            
+            // Test case for saveOrder method
+            Test.startTest();
+            List<PSKnowledgeHierarchyUtils.Order> orders = new List<PSKnowledgeHierarchyUtils.Order>();
+            PSKnowledgeHierarchyUtils.Order order1 = new PSKnowledgeHierarchyUtils.Order();
+            order1.Id = articles[0].Id;
+            order1.Order = '1';
+            order1.Op = 0;
+            orders.add(order1);
+            
+            PSKnowledgeHierarchyUtils.Order order2 = new PSKnowledgeHierarchyUtils.Order();
+            order2.Id = articles[1].Id;
+            order2.Order = '2';
+            order2.Op = 0;
+            orders.add(order2);
+            
+            PSKnowledgeHierarchyUtils.saveOrder(groupNames[0], categoryName, JSON.serialize(orders));
+            
+            Test.stopTest();
+            
+            // Assert the order values
+            List<KA_Hierarchy_Order__c> orderList = [SELECT Id, KA_Id__c, Order__c FROM KA_Hierarchy_Order__c WHERE Group_Name__c IN: groupNames];
+            System.assertEquals(2, orderList.size());
+            System.assertEquals(articles[0].Id, orderList[0].KA_Id__c);
+            System.assertEquals(1, orderList[0].Order__c);
+        }
+    }
+    
+    private static void populateLocalVariables() {
+        List<DescribeDataCategoryGroupResult> describeCategoryResult;
+        List<DescribeDataCategoryGroupStructureResult> describeCategoryStructureResult;
+        
+        List<String> objType = new List<String>();
+        objType.add('KnowledgeArticleVersion');
+        describeCategoryResult = Schema.describeDataCategoryGroups(objType);
+        
+        //Creating a list of pair objects to use as a parameter
+        //for the describe call
+        List<DataCategoryGroupSobjectTypePair> pairs = new List<DataCategoryGroupSobjectTypePair>();
+        
+        //Looping through the first describe result to create
+        //the list of pairs for the second describe call
+        for(DescribeDataCategoryGroupResult singleResult : describeCategoryResult) {
+            DataCategoryGroupSobjectTypePair p = new DataCategoryGroupSobjectTypePair();
+            p.setSobject(singleResult.getSobject());
+            p.setDataCategoryGroupName(singleResult.getName());
+            pairs.add(p);
+        }
+        
+        //describeDataCategoryGroupStructures()
+        describeCategoryStructureResult = Schema.describeDataCategoryGroupStructures(pairs, false);
+        System.debug('describeCategoryStructureResult=' + JSON.serialize(describeCategoryStructureResult));
+        
+        //Getting data from the result
+        DescribeDataCategoryGroupStructureResult singleResult = describeCategoryStructureResult[0];
+        
+        //Get details of category group
+        singleResult.getSobject();
+        singleResult.getName();
+        singleResult.getLabel();
+        singleResult.getDescription();
+        
+        categoryName = singleResult.getName();
+        
+        //Get the top level categories
+        DataCategory [] toplevelCategories = singleResult.getTopCategories();
+        for (DataCategory cat : toplevelCategories) {
+            List<DataCategory> childList = cat.getChildCategories();
+            if(childList != null && !childList.isEmpty()) {
+                for (DataCategory ccat : childList) {
+                    groupNames.add(ccat.getName());
+                }
+            }  
+        }
+    }
+}
