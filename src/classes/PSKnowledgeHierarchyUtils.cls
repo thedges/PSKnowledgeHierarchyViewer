@@ -40,7 +40,7 @@ public class PSKnowledgeHierarchyUtils {
             describeCategoryStructureResult = Schema.describeDataCategoryGroupStructures(pairs, false);
             System.debug('describeCategoryStructureResult=' + JSON.serialize(describeCategoryStructureResult));
 
-            //Getting data from the result
+            //Getting data from the result to generate report
             for(DescribeDataCategoryGroupStructureResult singleResult : describeCategoryStructureResult) {
                 //Get details of category group
                 singleResult.getSobject();
